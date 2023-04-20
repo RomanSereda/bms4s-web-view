@@ -1,7 +1,7 @@
 #include "wifi-login-support/uart_isr_rx_tx.h"
 #include <string.h>
 
-UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart1;
 
 #define uart &huart1
 
