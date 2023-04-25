@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
+#include <stdlib.h>
 #include <cmsis_os.h>
 
 #include "wifi-login-support/builtin_led.h"
@@ -119,7 +120,7 @@ static bool ap_mode(char* ap_ip)
 static bool send_to_client_html(char* string, int id)
 {
 	char data[80];
-	char datatosend[4096] = {0};
+	char datatosend[2048] = {0};
 	sprintf(datatosend, string);
 
 	uart_isr_flush();
@@ -152,7 +153,7 @@ bool start_http_web_server()
 	return false;
 }
 
-bool proc_http_web_server()
+bool proc_http_web_server(float* adc_values, int adc_channels)
 {
 	char id;
 	int result = 0;
@@ -199,9 +200,9 @@ bool proc_http_web_server()
 	}
 	else
 	{
-		/*------------------------------------*/
-		/*-----------YOU-CODE-HERE------------*/
-		/*------------------------------------*/
+		char data[256] = {0};
+		sprintf(data, "data: %f, %f, %f, %f", adc_values[0], adc_values[1], adc_values[2], adc_values[3]);
+		send_to_client_html(data, id);
 	}
 
 	return true;

@@ -65,7 +65,7 @@ void StartDefaultTask(void const * argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-volatile uint32_t adc_results_dma[ADC_CHANNELS];
+uint32_t adc_results_dma[ADC_CHANNELS];
 /* USER CODE END 0 */
 
 /**
@@ -100,7 +100,7 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_ADC_Start_DMA(&hadc1, adc_results_dma, ADC_CHANNELS);
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -121,7 +121,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 1024);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -238,7 +238,6 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_5;
   sConfig.Rank = 2;
-  sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -248,7 +247,6 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_6;
   sConfig.Rank = 3;
-  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -258,7 +256,6 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_7;
   sConfig.Rank = 4;
-  sConfig.SamplingTime = ADC_SAMPLETIME_84CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -364,12 +361,14 @@ void StartDefaultTask(void const * argument)
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   start_http_web_server();
-
-
   for(;;)
   {
-	  HAL_ADC_Start_DMA(&hadc1, adc_results_dma, ADC_CHANNELS);
-	  proc_http_web_server();
+	  float computed_adc_values[ADC_CHANNELS];
+	  for(int i = 0; i < ADC_CHANNELS; ++i){
+		  float voltage = ((float)adc_results_dma[i])/4096 * 3.3;
+		  computed_adc_values[i] = (voltage - 2.37)/0.066;
+	  }
+	  proc_http_web_server(computed_adc_values, ADC_CHANNELS);
   }
   /* USER CODE END 5 */
 }
